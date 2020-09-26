@@ -315,8 +315,18 @@ target_include_directories(duktape INTERFACE ${THIRDPARTY_DIR}/duktape/src)
 # QuickJS
 ################################
 
-add_library(quickjs STATIC ${THIRDPARTY_DIR}/quickjs/quickjs.c)
-target_include_directories(quickjs INTERFACE ${THIRDPARTY_DIR}/quickjs)
+set(QUICKJS_LIBRARY ${THIRDPARTY_DIR}/quickjs/libquickjs.a)
+add_custom_target(build_quickjs ALL
+                  COMMAND ${CMAKE_MAKE_PROGRAM}
+                  WORKING_DIRECTORY ${THIRDPARTY_DIR}/quickjs
+                  COMMENT "Original QuickJS makefile")
+add_library(quickjs STATIC IMPORTED)
+set_property(TARGET quickjs APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
+set_target_properties(quickjs PROPERTIES
+      IMPORTED_LOCATION_NOCONFIG "${QUICKJS_LIBRARY}")
+add_dependencies(quickjs build_quickjs)
+# add_library(quickjs STATIC ${THIRDPARTY_DIR}/quickjs/libquickjs.a)
+# target_include_directories(quickjs INTERFACE ${THIRDPARTY_DIR}/quickjs)
 
 ################################
 # TIC-80 core
