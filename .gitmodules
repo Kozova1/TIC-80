@@ -40,3 +40,6 @@
 [submodule "vendor/zip"]
 	path = vendor/zip
 	url = https://github.com/kuba--/zip.git
+[submodule "vendor/quickjs"]
+	path = vendor/quickjs
+	url = https://github.com/bellard/quickjs

@@ -312,6 +312,13 @@ add_library(duktape STATIC ${THIRDPARTY_DIR}/duktape/src/duktape.c)
 target_include_directories(duktape INTERFACE ${THIRDPARTY_DIR}/duktape/src)
 
 ################################
+# QuickJS
+################################
+
+add_library(quickjs STATIC ${THIRDPARTY_DIR}/quickjs/quickjs.c)
+target_include_directories(quickjs INTERFACE ${THIRDPARTY_DIR}/quickjs)
+
+################################
 # TIC-80 core
 ################################
 
@@ -338,7 +345,7 @@ target_include_directories(tic80core
     PUBLIC
         ${CMAKE_SOURCE_DIR}/include)
 
-target_link_libraries(tic80core lua lpeg wren squirrel giflib blipbuf duktape zlib)
+target_link_libraries(tic80core lua lpeg wren squirrel giflib blipbuf duktape quickjs zlib)
 
 if(LINUX)
     target_link_libraries(tic80core m)
@@ -468,7 +475,7 @@ if(BUILD_LIBRETRO)
         set_target_properties(tic80_libretro PROPERTIES SUFFIX "_partial.a")
         add_custom_command(TARGET tic80_libretro
                POST_BUILD
-                   COMMAND ${CMAKE_SOURCE_DIR}/build/libretro/merge_static.sh $(AR) ${CMAKE_BINARY_DIR}/lib/tic80_libretro${LIBRETRO_SUFFIX}.a ${CMAKE_BINARY_DIR}/lib/tic80_libretro_partial.a ${CMAKE_BINARY_DIR}/lib/libtic80core.a ${CMAKE_BINARY_DIR}/lib/liblua.a ${CMAKE_BINARY_DIR}/lib/libblipbuf.a ${CMAKE_BINARY_DIR}/lib/libduktape.a ${CMAKE_BINARY_DIR}/lib/libwren.a ${CMAKE_BINARY_DIR}/lib/libsquirrel.a ${CMAKE_BINARY_DIR}/lib/libgiflib.a ${CMAKE_BINARY_DIR}/lib/liblpeg.a)
+               COMMAND ${CMAKE_SOURCE_DIR}/build/libretro/merge_static.sh $(AR) ${CMAKE_BINARY_DIR}/lib/tic80_libretro${LIBRETRO_SUFFIX}.a ${CMAKE_BINARY_DIR}/lib/tic80_libretro_partial.a ${CMAKE_BINARY_DIR}/lib/libtic80core.a ${CMAKE_BINARY_DIR}/lib/liblua.a ${CMAKE_BINARY_DIR}/lib/libblipbuf.a ${CMAKE_BINARY_DIR}/lib/libduktape.a ${CMAKE_BINARY_DIR/lib/libquickjs.lto.a} ${CMAKE_BINARY_DIR}/lib/libwren.a ${CMAKE_BINARY_DIR}/lib/libsquirrel.a ${CMAKE_BINARY_DIR}/lib/libgiflib.a ${CMAKE_BINARY_DIR}/lib/liblpeg.a)
     else()
         add_library(tic80_libretro SHARED
         ${LIBRETRO_SRC}
