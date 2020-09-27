@@ -6,13 +6,68 @@
 #include "quickjs.h"
 
 static u64 ForceExitCounter = 0;
+//static const char[] TicMachine = "_TIC80"
+static JSClassID TicMachineID;
+static JSClassDef TicMachine = {
+    "_TIC80",
+};
 
-s32 js_timeout_check(void* udata)
+s32 qjs_timeout_check(void* udata)
 {
     tic_machine* machine = (tic_machine*)udata;
     tic_tick_data* tick = machine->data;
 
     return ForceExitCounter++ > 1000 ? tick->forceExit && tick->forceExit(tick->data) : false;
+}
+
+static tic_machine* getQuickJSMachine(JSContext* ctx)
+{
+    JSValue glob = JS_GetGlobalObject(ctx);
+    JSValue machine_opaque = JS_GetPropertyStr(ctx, glob, "_TIC80");
+    return JS_GetOpaque(machine_opaque, TicMachineID);
+}
+
+static JSValue qjs_reset(JSContext* ctx, JSValueConst this, int argc, JSValueConst* argv) {
+    tic_machine* machine = getQuickJSMachine(ctx);
+    machine->state.initialized = false;
+    return JS_UNDEFINED;
+}
+static JSValue qjs_print(JSContext* ctx, JSValueConst this, int argc, JSValueConst* argv) {
+    tic_mem* tic = (tic_mem*) getQuickJSMachine(ctx);
+    s32 x = 0, y = 0, color = TIC_PALETTE_SIZE-1, scale = 1;
+    bool fixed = false, alt = false;
+    if (argc >= 8 || argc <= 0) {
+        return JS_EXCEPTION;
+    }
+    if (argc >= 2) {
+        if (JS_ToInt32(ctx, &x, argv[1]))
+            return JS_EXCEPTION;
+    }
+    if (argc >= 3) {
+        if (JS_ToInt32(ctx, &y, argv[2]))
+            return JS_EXCEPTION;
+    }
+    if (argc >= 4) {
+        if (JS_ToInt32(ctx, &color, argv[3]))
+            return JS_EXCEPTION;
+    }
+    if (argc >= 5) {
+        fixed = JS_ToBool(ctx, argv[4]);
+    }
+    if (argc >= 6) {
+        if (JS_ToInt32(ctx, &scale, argv[5]))
+            return JS_EXCEPTION;
+    }
+    if (argc == 7) {
+        alt = JS_ToBool(ctx, argv[6]);
+    }
+    const char* txt = JS_ToCString(ctx, argv[0]);
+    return JS_NewInt32(ctx, tic_api_print(tic, txt ? txt : "nil", x, y, color, fixed, scale, alt));
+}
+
+static const JSCFunctionListEntry ApiItems[] = {
+    JS_CFUNC_DEF("print", 7, qjs_print),
+    JS_CFUNC_DEF("reset", 0, qjs_reset),
 }
 
 static const tic_outline_item* getJsOutline(const char* code, s32* size)
@@ -163,6 +218,10 @@ static bool initQJavascript(tic_mem* tic, const char* code)
     tic_machine* machine = (tic_machine*)tic;
     initQuickJS(machine);
     JSContext* ctx = machine->ctx;
+    JS_NewClassID(&TicMachineID);
+    JSValue tic_js = JS_NewObjectClass(ctx, TicMachineID);
+    JS_SetOpaque(tic_js, machine);
+    JS_SetPropertyStr(ctx, JS_GetGlobalObject(ctx), "_TIC80", tic_js);
     JSValue r = JS_Eval(ctx, code, strlen(code), "<input>", JS_EVAL_TYPE_MODULE);
     if (JS_IsException(r)) {
         machine->data->error(machine->data->data,
