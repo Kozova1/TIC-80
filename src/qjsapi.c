@@ -32,6 +32,18 @@ static JSValue qjs_reset(JSContext* ctx, JSValueConst this, int argc, JSValueCon
     machine->state.initialized = false;
     return JS_UNDEFINED;
 }
+
+static JSValue qjs_cls(JSContext* ctx, JSValueConst this, int argc, JSValueConst *argv) {
+    tic_mem* tic = (tic_mem*)getQuickJSMachine(ctx);
+    s32 color = 0;
+    if (argv == 1)
+        JS_ToInt32(ctx, &color, argv[0])
+    else if (argv > 1)
+        return JS_EXCEPTION;
+    tic_api_cls(tic, color);
+    return JS_UNDEFINED;
+}                                               \
+
 static JSValue qjs_print(JSContext* ctx, JSValueConst this, int argc, JSValueConst* argv) {
     tic_mem* tic = (tic_mem*) getQuickJSMachine(ctx);
     s32 x = 0, y = 0, color = TIC_PALETTE_SIZE-1, scale = 1;
@@ -68,6 +80,7 @@ static JSValue qjs_print(JSContext* ctx, JSValueConst this, int argc, JSValueCon
 static const JSCFunctionListEntry ApiItems[] = {
     JS_CFUNC_DEF("print", 7, qjs_print),
     JS_CFUNC_DEF("reset", 0, qjs_reset),
+    JS_CFUNC_DEF("cls",   1, qjs_cls),
 };
 
 static inline bool isalnum_(char c) {return isalnum(c) || c == '_';}
