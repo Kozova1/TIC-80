@@ -36,13 +36,13 @@ static JSValue qjs_reset(JSContext* ctx, JSValueConst this, int argc, JSValueCon
 static JSValue qjs_cls(JSContext* ctx, JSValueConst this, int argc, JSValueConst *argv) {
     tic_mem* tic = (tic_mem*)getQuickJSMachine(ctx);
     s32 color = 0;
-    if (argv == 1)
-        JS_ToInt32(ctx, &color, argv[0])
-    else if (argv > 1)
+    if (argc == 1)
+        JS_ToInt32(ctx, &color, argv[0]);
+    else if (argc > 1)
         return JS_EXCEPTION;
     tic_api_cls(tic, color);
     return JS_UNDEFINED;
-}                                               \
+}
 
 static JSValue qjs_print(JSContext* ctx, JSValueConst this, int argc, JSValueConst* argv) {
     tic_mem* tic = (tic_mem*) getQuickJSMachine(ctx);
@@ -175,8 +175,13 @@ static void callQJavascriptTick(tic_mem* tic)
         JSValue ticfunc = JS_GetPropertyStr(ctx, glob, "TIC");
         JSValue result = JS_Call(ctx, ticfunc, glob, 0, NULL);
         if (JS_IsException(result)) {
-            machine->data->error(machine->data->data, JS_ToCString(ctx, JS_GetException(ctx)));
+            const char* str =  JS_ToCString(ctx, JS_GetException(ctx));
+            machine->data->error(machine->data->data, str);
+            JS_FreeCString(ctx, str);
         }
+        JS_FreeValue(ctx, result);
+        JS_FreeValue(ctx, ticfunc);
+        JS_FreeValue(ctx, glob);
     }
 }
 
@@ -191,6 +196,10 @@ static void callQJavascriptScanline(tic_mem* tic, s32 row, void* data)
     if (JS_IsException(result)) {
         machine->data->error(machine->data->data, JS_ToCString(ctx, JS_GetException(ctx)));
     }
+    JS_FreeValue(ctx, glob);
+    JS_FreeValue(ctx, scnfunc);
+    JS_FreeValue(ctx, args);
+    JS_FreeValue(ctx, result);
 }
 
 static void callQJavascriptOverline(tic_mem* tic, void* data)
@@ -206,6 +215,9 @@ static void callQJavascriptOverline(tic_mem* tic, void* data)
         if (JS_IsException(result)) {
             machine->data->error(machine->data->data, JS_ToCString(ctx, JS_GetException(ctx)));
         }
+        JS_FreeValue(ctx, glob);
+        JS_FreeValue(ctx, ticfunc);
+        JS_FreeValue(ctx, result);
     }
 }
 
@@ -243,6 +255,7 @@ static bool initQJavascript(tic_mem* tic, const char* code)
                              JS_ToCString(ctx, JS_GetException(ctx)));
         return false;
     }
+    JS_FreeValue(ctx, r);
     return true;
 }
 
@@ -253,7 +266,7 @@ static const char* const QJsKeywords [] =
     "switch", "while", "debugger", "function", "this", "with",
     "default", "if", "throw", "delete", "in", "try", "const",
     "true", "false", "let", "async", "await", "static", "export",
-    "extends", "import"
+    "extends", "import", "as", "from"
 };
 
 static const tic_script_config QJsSyntaxConfig =
