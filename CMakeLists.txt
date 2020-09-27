@@ -325,6 +325,7 @@ set_property(TARGET quickjs APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
 set_target_properties(quickjs PROPERTIES
       IMPORTED_LOCATION_NOCONFIG "${QUICKJS_LIBRARY}")
 add_dependencies(quickjs build_quickjs)
+target_include_directories(quickjs INTERFACE ${THIRDPARTY_DIR}/quickjs)
 # add_library(quickjs STATIC ${THIRDPARTY_DIR}/quickjs/libquickjs.a)
 # target_include_directories(quickjs INTERFACE ${THIRDPARTY_DIR}/quickjs)
 
