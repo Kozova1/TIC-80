@@ -1,6 +1,4 @@
-﻿_
-
-// Copyright (c) 2017 Vadim Grigoruk @nesbox // grigoruk@gmail.com
+﻿// Copyright (c) 2017 Vadim Grigoruk @nesbox // grigoruk@gmail.com
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +20,7 @@
 
 #include "machine.h"
 
-//#if defined(TIC_BUILD_WITH_JS)
+#if defined(TIC_BUILD_WITH_JS)
 
 #include "tools.h"
 
@@ -1059,4 +1057,4 @@ const tic_script_config* getJsScriptConfig()
 
 s32 duk_timeout_check(void* udata){return 0;}
 
-//#endif /* defined(TIC_BUILD_WITH_JS) */
+#endif /* defined(TIC_BUILD_WITH_JS) */

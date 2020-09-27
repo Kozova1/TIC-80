@@ -69,7 +69,8 @@ typedef enum
 #endif /* defined(TIC_BUILD_WITH_LUA) */
 
 #if defined(TIC_BUILD_WITH_JS)
-    JavaScript, 
+    JavaScript,
+    QJavaScript,
 #endif
 
 #if defined(TIC_BUILD_WITH_WREN)
@@ -580,8 +581,8 @@ static void* getDemoCart(Console* console, ScriptLang script, s32* size)
             {
                 #include "../build/assets/jsdemo.tic.dat"
             };
-            demo = JsDemoRom;
-            romSize = sizeof JsDemoRom;
+            demo = QJsDemoRom;
+            romSize = sizeof QJsDemoRom;
         }
         break;
 #endif /* defined(TIC_BUILD_WITH_JS) */

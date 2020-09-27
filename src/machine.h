@@ -25,6 +25,7 @@
 #include "ticapi.h"
 #include "tools.h"
 #include "blip_buf.h"
+#include "quickjs.h"
 
 typedef struct
 {
@@ -170,8 +171,6 @@ typedef struct
 
 #if defined(TIC_BUILD_WITH_JS)
         struct duk_hthread* js;
-#endif
-#if defined(TIC_BUILD_WITH_QJS)
         JSRuntime* qjs_rt;
         JSContext* qjs;
 #endif

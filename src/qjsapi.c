@@ -68,8 +68,9 @@ static JSValue qjs_print(JSContext* ctx, JSValueConst this, int argc, JSValueCon
 static const JSCFunctionListEntry ApiItems[] = {
     JS_CFUNC_DEF("print", 7, qjs_print),
     JS_CFUNC_DEF("reset", 0, qjs_reset),
-}
+};
 
+static inline bool isalnum_(char c) {return isalnum(c) || c == '_';}
 static const tic_outline_item* getJsOutline(const char* code, s32* size)
 {
     enum{Size = sizeof(tic_outline_item)};
@@ -130,8 +131,8 @@ static const tic_outline_item* getJsOutline(const char* code, s32* size)
     return items;
 }
 
-void evalJs(tic_mem* tic, const char* code) {
-    printf("TODO: JS eval not yet implemented\n")
+void evalQJs(tic_mem* tic, const char* code) {
+    printf("TODO: JS eval not yet implemented\n");
 }
 
 static void closeQJavascript(tic_mem* tic)
@@ -153,7 +154,7 @@ static void closeQJavascript(tic_mem* tic)
 static void callQJavascriptTick(tic_mem* tic)
 {
     ForceExitCounter = 0;
-    tic_macine* machine = (tic_machine*)tic;
+    tic_machine* machine = (tic_machine*)tic;
     JSContext* ctx = machine->qjs;
     if (ctx)
     {
@@ -172,16 +173,17 @@ static void callQJavascriptScanline(tic_mem* tic, s32 row, void* data)
     JSContext* ctx = machine->qjs;
     JSValue glob = JS_GetGlobalObject(ctx);
     JSValue scnfunc = JS_GetPropertyStr(ctx, glob, "SCN");
-    JSValue result = JS_Call(ctx, scnfunc, glob, 1, JS_Int32(ctx, row));
+    JSValue args = JS_NewInt32(ctx, row);
+    JSValue result = JS_Call(ctx, scnfunc, glob, 1, &args);
     if (JS_IsException(result)) {
         machine->data->error(machine->data->data, JS_ToCString(ctx, JS_GetException(ctx)));
     }
 }
 
-static void callQJavascriptOverline(tic_mem* tic)
+static void callQJavascriptOverline(tic_mem* tic, void* data)
 {
     ForceExitCounter = 0;
-    tic_macine* machine = (tic_machine*)tic;
+    tic_machine* machine = (tic_machine*)tic;
     JSContext* ctx = machine->qjs;
     if (ctx)
     {
@@ -194,30 +196,30 @@ static void callQJavascriptOverline(tic_mem* tic)
     }
 }
 
+static int initModule(JSContext* ctx, JSModuleDef* m) {
+    return JS_SetModuleExportList(ctx, m, ApiItems, COUNT_OF(ApiItems));
+}
+
+static JSModuleDef* QJsApiModule(JSContext* ctx, const char* name) {
+    JSModuleDef* m;
+    m = JS_NewCModule(ctx, name, initModule);
+    if (m) JS_AddModuleExportList(ctx, m, ApiItems, COUNT_OF(ApiItems));
+    return m;
+}
+
 static void initQuickJS(tic_machine* machine)
 {
     closeQJavascript((tic_mem*)machine);
     machine->qjs_rt = JS_NewRuntime();
     machine->qjs = JS_NewContext(machine->qjs_rt);
-    JS_AddModuleExport(ctx, JS_INIT_MODULE(ctx, "tic80"), "tic80");
-}
-
-static int initModule(JSContext* ctx, JSModuleDef* m) {
-    reutnr JS_SetModuleExportList(ctx, m, ApiItems, COUNT_OF(ApiItems));
-}
-
-JSModuleDef* QJsApiModule(JSContext* ctx, const char* name) {
-    JSModuleDef* m;
-    m = JS_NewCModule(ctx, name, initModule);
-    if (m) JS_AddModuleExportList(ctx, m, ApiItems, COUNT_OF(API_ITEMS));
-    return m;
+    JS_AddModuleExport(machine->qjs, QJsApiModule(machine->qjs, "tic80"), "tic80");
 }
 
 static bool initQJavascript(tic_mem* tic, const char* code)
 {
     tic_machine* machine = (tic_machine*)tic;
     initQuickJS(machine);
-    JSContext* ctx = machine->ctx;
+    JSContext* ctx = machine->qjs;
     JS_NewClassID(&TicMachineID);
     JSValue tic_js = JS_NewObjectClass(ctx, TicMachineID);
     JS_SetOpaque(tic_js, machine);
@@ -231,6 +233,16 @@ static bool initQJavascript(tic_mem* tic, const char* code)
     return true;
 }
 
+static const char* const QJsKeywords [] =
+{
+    "break", "do", "instanceof", "typeof", "case", "else", "new",
+    "var", "catch", "finally", "return", "void", "continue", "for",
+    "switch", "while", "debugger", "function", "this", "with",
+    "default", "if", "throw", "delete", "in", "try", "const",
+    "true", "false", "let", "async", "await", "static", "export",
+    "extends", "import"
+};
+
 static const tic_script_config QJsSyntaxConfig =
 {
     .init = initQJavascript,
@@ -238,29 +250,21 @@ static const tic_script_config QJsSyntaxConfig =
     .tick = callQJavascriptTick,
     .scanline = callQJavascriptScanline,
     .overline = callQJavascriptOverline,
+    .eval = evalQJs,
 
     .blockCommentStart  = "/*",
     .blockCommentEnd    = "/*",
     .blockCommentStart2 = "<!--",
     .blockCommentEnd2   = "-->",
     .blockStringStart   = NULL,
-    .blockStringEnd     = NULL
+    .blockStringEnd     = NULL,
     .singleComment      = "//",
 
     .keywords           = QJsKeywords,
-    .keywordsCount      = COUNT_OF(JsKeywords),
-}
+    .keywordsCount      = COUNT_OF(QJsKeywords),
+};
 
 const tic_script_config* getQJsScriptConfig()
 {
     return &QJsSyntaxConfig;
 }
-
-static const char* const QJsKeywords [] =
-{
-    "break", "do", "instanceof", "typeof", "case", "else", "new",
-    "var", "catch", "finally", "return", "void", "continue", "for",
-    "switch", "while", "debugger", "function", "this", "with",
-    "default", "if", "throw", "delete", "in", "try", "const",
-    "true", "false"
-};

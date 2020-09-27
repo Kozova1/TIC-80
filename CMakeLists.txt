@@ -315,7 +315,7 @@ target_include_directories(duktape INTERFACE ${THIRDPARTY_DIR}/duktape/src)
 # QuickJS
 ################################
 
-set(QUICKJS_LIBRARY ${THIRDPARTY_DIR}/quickjs/libquickjs.a)
+set(QUICKJS_LIBRARY ${THIRDPARTY_DIR}/quickjs/libquickjs.lto.a)
 add_custom_target(build_quickjs ALL
                   COMMAND ${CMAKE_MAKE_PROGRAM}
                   WORKING_DIRECTORY ${THIRDPARTY_DIR}/quickjs
@@ -339,7 +339,8 @@ set(TIC80CORE_SRC
     ${TIC80CORE_DIR}/tic.c 
     ${TIC80CORE_DIR}/tilesheet.c 
     ${TIC80CORE_DIR}/tools.c 
-    ${TIC80CORE_DIR}/jsapi.c 
+    ${TIC80CORE_DIR}/jsapi.c
+    ${TIC80CORE_DIR}/qjsapi.c
     ${TIC80CORE_DIR}/luaapi.c 
     ${TIC80CORE_DIR}/wrenapi.c 
     ${TIC80CORE_DIR}/squirrelapi.c

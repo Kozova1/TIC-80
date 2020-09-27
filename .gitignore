@@ -164,3 +164,4 @@ build/*.sln
 build/.local/
 build/*.dir/
 build/x64/
+.ccls-cache/
