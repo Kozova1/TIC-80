@@ -87,9 +87,7 @@ static inline bool isalnum_(char c) {return isalnum(c) || c == '_';}
 static const tic_outline_item* getJsOutline(const char* code, s32* size)
 {
     enum{Size = sizeof(tic_outline_item)};
-
     *size = 0;
-
     static tic_outline_item* items = NULL;
 
     if(items)
@@ -175,7 +173,7 @@ static void callQJavascriptTick(tic_mem* tic)
         JSValue ticfunc = JS_GetPropertyStr(ctx, glob, "TIC");
         JSValue result = JS_Call(ctx, ticfunc, glob, 0, NULL);
         if (JS_IsException(result)) {
-            const char* str =  JS_ToCString(ctx, JS_GetException(ctx));
+            const char* str = JS_ToCString(ctx, JS_GetException(ctx));
             machine->data->error(machine->data->data, str);
             JS_FreeCString(ctx, str);
         }
@@ -276,6 +274,8 @@ static const tic_script_config QJsSyntaxConfig =
     .tick = callQJavascriptTick,
     .scanline = callQJavascriptScanline,
     .overline = callQJavascriptOverline,
+
+    .getOutline = getJsOutline,
     .eval = evalQJs,
 
     .blockCommentStart  = "/*",
